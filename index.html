@@ -12,16 +12,19 @@
 </head>
 <body>
     <h1>Grocery List Sorter</h1>
+    <label for="apiToken">Hugging Face API Token:</label>
+    <input type="text" id="apiToken" placeholder="Enter API Token">
+    <br><br>
     <textarea id="groceryList" rows="10" cols="50" placeholder="Paste your grocery list here..."></textarea>
     <br>
     <button onclick="sortGroceries()">Sort Groceries</button>
     <div id="output"></div>
 
     <script>
-        async function classifyItem(item, categories) {
+        async function classifyItem(item, categories, token) {
             const response = await fetch('https://api-inference.huggingface.co/models/facebook/bart-large-mnli', {
                 method: 'POST',
-                headers: { 'Authorization': 'Bearer YOUR_HUGGINGFACE_API_TOKEN', 'Content-Type': 'application/json' },
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ inputs: item, parameters: { candidate_labels: categories } })
             });
             const result = await response.json();
@@ -29,12 +32,18 @@
         }
 
         async function sortGroceries() {
+            const token = document.getElementById("apiToken").value;
+            if (!token) {
+                alert("Please enter your Hugging Face API token.");
+                return;
+            }
+
             const categories = ["Produce", "Dairy", "Bakery", "Meat", "Seafood", "Pantry", "Frozen"];
             const items = document.getElementById("groceryList").value.split('\n').map(item => item.trim()).filter(item => item);
             const sortedItems = {};
 
             for (const item of items) {
-                const category = await classifyItem(item, categories);
+                const category = await classifyItem(item, categories, token);
                 if (!sortedItems[category]) sortedItems[category] = [];
                 sortedItems[category].push(item);
             }
